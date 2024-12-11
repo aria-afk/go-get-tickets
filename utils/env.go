@@ -1,12 +1,13 @@
+// utils/env.go: Tools to load or manage .env files
 package utils
 
 import (
 	"github.com/joho/godotenv"
 )
 
-// Load a specified .env file by local path
-func LoadEnv(localPath string) error {
-	err := godotenv.Load(localPath)
+// Load a specified .env file by specified path (relative)
+func LoadEnv(filePath string) error {
+	err := godotenv.Load(filePath)
 	if err != nil {
 		return err
 	}

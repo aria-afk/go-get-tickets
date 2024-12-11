@@ -1,4 +1,4 @@
-// sub-package to provide a base connection
+// pg: sub-package to provide connection to Postgresql as well as some utility methods
 package pg
 
 import (
@@ -14,8 +14,8 @@ type PG struct {
 	conn *sql.DB
 }
 
-// NewPG: Creates a new PG struct instance and attempts to connect
-// to the provided psql connection string via ENV (PG_CONN_STRING)
+// Constructor to recieve a new *PG instance. Attempts to open a connection to
+// postgres via the PG_CONN_STRING in the .env file, assuming it is already loaded.
 func NewPG() (*PG, error) {
 	connStr := os.Getenv("PG_CONN_STRING")
 	if connStr == "" {
