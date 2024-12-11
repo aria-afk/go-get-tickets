@@ -18,7 +18,7 @@ type PG struct {
 // to the provided psql connection string via ENV (PG_CONN_STRING)
 func NewPG() (*PG, error) {
 	connStr := os.Getenv("PG_CONN_STRING")
-	if len(connStr) == 0 {
+	if connStr == "" {
 		return &PG{}, errors.New("PG ERROR: Could not retrieve the PG_CONN_STRING from .env")
 	}
 
