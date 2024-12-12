@@ -29,10 +29,14 @@ func NewPG() (*PG, error) {
 		return &PG{}, fmt.Errorf("PG ERROR: Could not open connection to postgres \n %s", err)
 	}
 
-	return &PG{
+	res := &PG{
 		Conn:     db,
 		QueryMap: make(map[string]string, 0),
-	}, nil
+	}
+
+	// TODO: Error handling when there is a queries dir.
+	_ = res.LoadQueryMap("queries")
+	return res, nil
 }
 
 // Parses a given base dirPath and stores all query files into
