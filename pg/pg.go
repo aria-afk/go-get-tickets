@@ -11,7 +11,7 @@ import (
 )
 
 type PG struct {
-	conn *sql.DB
+	Conn *sql.DB
 }
 
 // Constructor to recieve a new *PG instance. Attempts to open a connection to
@@ -28,6 +28,6 @@ func NewPG() (*PG, error) {
 	}
 
 	return &PG{
-		conn: db,
+		Conn: db,
 	}, nil
 }

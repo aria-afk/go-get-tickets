@@ -28,7 +28,7 @@ func TestNewPG(t *testing.T) {
 
 	// Ensure connection can preform queries
 	var response int64
-	err = db.conn.QueryRow("SELECT 1 + $1", 1).Scan(&response)
+	err = db.Conn.QueryRow("SELECT 1 + $1", 1).Scan(&response)
 
 	if response != 2 || err != nil {
 		cleanup()
