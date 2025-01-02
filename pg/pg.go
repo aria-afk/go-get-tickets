@@ -7,6 +7,9 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/golang-migrate/migrate/v4"
+	"github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/lib/pq"
 )
 
@@ -25,6 +28,26 @@ func NewPG() (*PG, error) {
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
 		return &PG{}, fmt.Errorf("PG ERROR: Could not open connection to postgres \n %s", err)
+	}
+
+	driver, err := postgres.WithInstance(db, &postgres.Config{})
+	if err != nil {
+		fmt.Println("migrate error 1")
+		fmt.Print(err)
+	}
+	fmt.Println("hi1")
+
+	m, err := migrate.NewWithDatabaseInstance("file://migrations", "postgres", driver)
+	if err != nil {
+		fmt.Println("migrate error 2")
+		fmt.Print(err)
+	}
+
+	// TODO should we fail completely here like this on a failure to apply migrations?
+	err = m.Up()
+	if err != nil {
+		fmt.Printf("Failed to apply migrations:\n %s", err)
+		return nil, err
 	}
 
 	return &PG{
