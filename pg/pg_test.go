@@ -8,7 +8,8 @@ import (
 )
 
 func setup() {
-	os.WriteFile("pg_test.env", []byte("PG_CONN_STRING=postgresql://postgres:test@localhost/template1"), 0755)
+	// os.WriteFile("pg_test.env", []byte("PG_CONN_STRING=postgresql://testtest:test@localhost/testtest?sslmode=disable"), 0755)
+	os.WriteFile("pg_test.env", []byte("PG_CONN_STRING=postgresql://postgres:test@localhost/testtest?sslmode=disable"), 0755)
 	utils.LoadEnv("pg_test.env")
 }
 
