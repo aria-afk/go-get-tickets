@@ -30,7 +30,7 @@ func formatBasePath() string {
 	// Root dir
 	case "go-get-tickets":
 		return filepath.Join(absPath, "queries")
-	// This package (for queries_test)
+	// This package (for lib_test)
 	case "queries":
 		return absPath
 	default:
