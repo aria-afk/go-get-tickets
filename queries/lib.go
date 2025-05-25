@@ -7,11 +7,12 @@ import (
 )
 
 func parseQueryFile(path string) string {
+	basePath := formatBasePath()
 	// Ensure file is a valid .sql file
 	if path[len(path)-4:] != ".sql" {
 		panic(fmt.Sprintf("Provided file path is not a .sql file, given path: %s", path))
 	}
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(basePath + "/" + path)
 	if err != nil {
 		panic(fmt.Sprintf("Issue parsing query file [ %s ]\n Error: %s", path, err))
 	}
@@ -36,5 +37,3 @@ func formatBasePath() string {
 		panic("Given working dir does not have a mapping yet, please add it.")
 	}
 }
-
-var basePath = formatBasePath()

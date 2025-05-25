@@ -1,3 +1,3 @@
 package queries
 
-var testQuery = parseQueryFile(basePath + "/_test/test.sql")
+var testQuery = parseQueryFile("_test/test.sql")
