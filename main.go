@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -33,27 +34,86 @@ func main() {
 	}
 
 	r := gin.Default()
-	// PUT vendor
+	p, _ := pg.NewPG()
+	r.GET("/vendors", func(c *gin.Context) {
+		// type Vendor struct {
+		// 	UUID      string
+		// 	Name      string
+		// 	OwnerUUID string
+		// 	CreatedAt time.Time
+		// 	UpdatedAt time.Time
+		// }
+		// vendor := Vendor{}
+		var UUID string
+		// p.Conn.QueryRow("SELECT uuid,name,owner_uuid,created_at,updated_at FROM vendors LIMIT 1").Scan(&UUID, &vendor.Name, &vendor.OwnerUUID, &vendor.CreatedAt, &vendor.UpdatedAt)
+		err := p.Conn.QueryRow("SELECT uuid FROM vendors LIMIT 1").Scan(&UUID)
+		// fmt.Printf("%#v\n", vendor)
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		fmt.Print(UUID)
+
+		// TODO: check if i got a no row error
+
+		// i would have a field in gin.H that i put the struct in maybe is what aria says and i don't marshall it? if i want to nest it
+		// j, _ := json.Marshal(vendor)
+		// j, _ := json.Marshal(UUID)
+
+		// TODO: this is not returning what i want, try using gin.H
+		c.JSON(http.StatusOK, UUID)
+	})
+	r.GET("/vendors/:vendor_uuid", func(c *gin.Context) {
+		type Vendor struct {
+			UUID      string
+			Name      string
+			OwnerUUID string
+			CreatedAt time.Time
+			UpdatedAt time.Time
+		}
+		vendor := Vendor{}
+		vu := c.Param("vendor_uuid")
+		// p.Conn.QueryRow("SELECT uuid,name,owner_uuid,created_at,updated_at FROM vendors LIMIT 1").Scan(&UUID, &vendor.Name, &vendor.OwnerUUID, &vendor.CreatedAt, &vendor.UpdatedAt)
+		err := p.Conn.QueryRow("SELECT uuid, name, owner_uuid, created_at, updated_at FROM vendors WHERE uuid = '"+vu+"' LIMIT 1").
+			Scan(&vendor.UUID, &vendor.Name, &vendor.OwnerUUID, &vendor.CreatedAt, &vendor.UpdatedAt)
+		if err != nil {
+			fmt.Println(err)
+		}
+		fmt.Printf("%#v\n", vendor)
+		fmt.Print(vendor)
+
+		// TODO: check if i got a no row error
+		// TODO: load some example data in for tests
+
+		// i would have a field in gin.H that i put the struct in maybe is what aria says and i don't marshall it? if i want to nest it
+		// j, _ := json.Marshal(vendor)
+		// j, _ := json.Marshal(vendor)
+
+		c.JSON(http.StatusOK, vendor)
+	})
+	//
 	// GET vendor
+	// PUT vendor
 	// PATCH vendor
 	// DELETE vendor
-	// PUT user
 	// cookies? or JWT?
 	// GET user for viewing your profile or settings or name??
+	// PUT user
 	// PATCH user
 	// DELETE user
+	// GET event
 	// PUT event
 	// provision tickets at event creation directly into db (means there needs to be upper limit)
 	// that is also where the qr codes get generated
 	// PATCH event to make edits or to hide or show an event
-	// GET event
 	// DELETE event
 	// for image upload we will try to use presigned urls
 	// GET presigned url (image name as param) for uploading to object store
-	// dont need a PUT for ticket yet
 	// GET ticket
+	// PUT ticket
 	// PATCH ticket
 	// DELETE ticket (for refund)
+	// GET receipt
 	// PUT receipt
 	// POST refund
 	// POST purchase
