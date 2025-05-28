@@ -8,7 +8,7 @@ import (
 
 func parseQueryFile(path string) string {
 	basePath := formatBasePath()
-	// Ensure file is a valid .sql file
+	// Ensure file has a .sql extension
 	if path[len(path)-4:] != ".sql" {
 		panic(fmt.Sprintf("Provided file path is not a .sql file, given path: %s", path))
 	}
