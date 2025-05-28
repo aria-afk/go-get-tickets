@@ -13,11 +13,11 @@ func TestParseQueryFilePass(t *testing.T) {
 	}
 }
 
-/* Uncomment to test
 func TestParseQueryFilePanic(t *testing.T) {
-	testPanic := parseQueryFile("./_test/DOESNTEXIST.sql")
-	if len(testPanic) > 0 {
-		t.Error("Did not panic out on a non-existent .sql file")
-	}
+	defer func() {
+		if r := recover(); r == nil {
+			t.Error("Did not panic out on a non-existent .sql file")
+		}
+	}()
+	_ = parseQueryFile("./_test/DOESNTEXIST.sql")
 }
-*/
