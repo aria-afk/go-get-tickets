@@ -27,7 +27,7 @@ func TestNewPG(t *testing.T) {
 		t.Fatalf("Error creating new PG instance:\n%s", err)
 	}
 
-	// Ensure connection can preform queries
+	// Ensure connection can perform queries
 	var response int
 	err = db.Conn.QueryRow(queries.TestQuery, 1).Scan(&response)
 

@@ -30,27 +30,30 @@ func NewPG() (*PG, error) {
 		return &PG{}, fmt.Errorf("PG ERROR: Could not open connection to postgres \n %s", err)
 	}
 
-	driver, err := postgres.WithInstance(db, &postgres.Config{})
-	if err != nil {
-		fmt.Println("migrate error 1")
-		fmt.Print(err)
-	}
-	fmt.Println("hi1")
-
-	m, err := migrate.NewWithDatabaseInstance("file://migrations", "postgres", driver)
-	if err != nil {
-		fmt.Println("migrate error 2")
-		fmt.Print(err)
-	}
-
-	// TODO should we fail completely here like this on a failure to apply migrations?
-	err = m.Up()
-	if err != nil {
-		fmt.Printf("Failed to apply migrations:\n %s", err)
-		return nil, err
-	}
-
 	return &PG{
 		Conn: db,
 	}, nil
+}
+
+func MigrateUp(pg *PG) error {
+	driver, err := postgres.WithInstance(pg.Conn, &postgres.Config{})
+	if err != nil {
+		fmt.Printf("Migration error getting driver:\n%s", err)
+		return err
+	}
+
+	m, err := migrate.NewWithDatabaseInstance("file://migrations", "postgres", driver)
+	if err != nil {
+		fmt.Printf("Migration error getting migrator:\n%s", err)
+		return err
+	}
+
+	err = m.Up()
+	if err != nil {
+		fmt.Printf("Failed to apply migrations:\n%s", err)
+		return err
+	}
+
+	fmt.Println("Successfully applied migrations")
+	return nil
 }
