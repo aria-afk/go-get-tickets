@@ -38,20 +38,24 @@ func NewPG() (*PG, error) {
 func MigrateUp(pg *PG) error {
 	driver, err := postgres.WithInstance(pg.Conn, &postgres.Config{})
 	if err != nil {
-		fmt.Printf("Migration error getting driver:\n%s", err)
+		fmt.Printf("Migration error getting driver:\n%s\n", err)
 		return err
 	}
 
-	m, err := migrate.NewWithDatabaseInstance("file://migrations", "postgres", driver)
+	m, err := migrate.NewWithDatabaseInstance("file://pg/migrations", "postgres", driver)
 	if err != nil {
-		fmt.Printf("Migration error getting migrator:\n%s", err)
+		fmt.Printf("Migration error getting migrator:\n%s\n", err)
 		return err
 	}
 
 	err = m.Up()
 	if err != nil {
-		fmt.Printf("Failed to apply migrations:\n%s", err)
-		return err
+		if errors.Is(err, migrate.ErrNoChange) {
+			fmt.Println("No change")
+		} else {
+			fmt.Printf("Failed to apply migrations:\n%s\n", err)
+			return err
+		}
 	}
 
 	fmt.Println("Successfully applied migrations")

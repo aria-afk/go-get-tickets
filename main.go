@@ -9,7 +9,7 @@ import (
 
 func main() {
 	args := os.Args[1:]
-	if args[0] == "migrate" {
+	if len(args) > 0 && args[0] == "migrate" {
 		fmt.Println("Running migrations...")
 		pgConn, err := pg.NewPG()
 		if err != nil {
