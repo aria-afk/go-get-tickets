@@ -5,9 +5,12 @@ import (
 	"os"
 
 	"github.com/aria-afk/go-get-tickets/pg"
+	"github.com/aria-afk/go-get-tickets/utils"
 )
 
 func main() {
+	utils.LoadEnv("dev.env")
+
 	args := os.Args[1:]
 	if len(args) > 0 && args[0] == "migrate" {
 		fmt.Println("Running migrations...")
