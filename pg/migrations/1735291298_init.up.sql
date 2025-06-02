@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS "events" (
   "capacity" INTEGER NOT NULL,
   "status" TEXT NOT NULL,
   "ticket_price" DECIMAL(12, 2)[],
-  "currency" TEXT,
+  "currency" TEXT CHECK ("currency" = ANY('{usd, USD}'::text[])),
   "created_at" TIMESTAMP NOT NULL DEFAULT NOW(),
   "updated_at" TIMESTAMP NOT NULL DEFAULT NOW()
 );
