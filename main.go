@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 
@@ -11,15 +12,18 @@ import (
 func main() {
 	utils.LoadEnv("dev.env")
 
-	args := os.Args[1:]
-	if len(args) > 0 && args[0] == "migrate" {
-		fmt.Println("Running migrations...")
-		pgConn, err := pg.NewPG()
+	// flags
+	migrate := flag.String("migrate", "", "Type of migration to run, valid options are [up/down]")
+	flag.Parse()
+
+	if *migrate != "" {
+		fmt.Printf("Running migration %s\n", *migrate)
+		db, err := pg.NewPG()
 		if err != nil {
 			fmt.Printf("Error getting DB connection:\n%s", err)
 			os.Exit(1)
 		}
-		err = pg.MigrateUp(pgConn)
+		err = db.Migrate(*migrate)
 		if err != nil {
 			os.Exit(1)
 		}
