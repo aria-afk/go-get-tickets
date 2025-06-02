@@ -43,4 +43,4 @@ jobs:
     - name: Test
       run: go test -v ./...
       env:
-        PG_CONN_STRING: postgresql://postgres:test@localhost/template1?sslmode=disable
+        PG_CONN_STRING: postgresql://postgres:postgres@localhost/template1?sslmode=disable
