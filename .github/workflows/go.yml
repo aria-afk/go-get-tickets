@@ -36,6 +36,11 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - id: go-cache-paths
+      run: |
+        echo "::set-output name=go-build::$(go env GOCACHE)"
+        echo "::set-output name=go-mod::$(go env GOMODCACHE)"
+
       # Cache go build cache, used to speedup go test
     - name: Go Build Cache
       uses: actions/cache@v4
