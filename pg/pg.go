@@ -7,6 +7,9 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/golang-migrate/migrate/v4"
+	"github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/lib/pq"
 )
 
@@ -30,4 +33,39 @@ func NewPG() (*PG, error) {
 	return &PG{
 		Conn: db,
 	}, nil
+}
+
+func (pg *PG) Migrate(migrationType string) error {
+	driver, err := postgres.WithInstance(pg.Conn, &postgres.Config{})
+	if err != nil {
+		fmt.Printf("Migration error getting driver:\n%s\n", err)
+		return err
+	}
+
+	m, err := migrate.NewWithDatabaseInstance("file://pg/migrations", "postgres", driver)
+	if err != nil {
+		fmt.Printf("Migration error getting migrator:\n%s\n", err)
+		return err
+	}
+
+	switch migrationType {
+	case "up":
+		err = m.Up()
+	case "down":
+		err = m.Down()
+	default:
+		err = errors.New(fmt.Sprintf("Migration error: Invalid migration type provided: %s", migrationType))
+	}
+
+	if err != nil {
+		if errors.Is(err, migrate.ErrNoChange) {
+			fmt.Println("No change")
+		} else {
+			fmt.Printf("Failed to apply migrations:\n%s\n", err)
+			return err
+		}
+	}
+
+	fmt.Println("Successfully applied migrations")
+	return nil
 }
