@@ -35,7 +35,7 @@ func NewPG() (*PG, error) {
 	}, nil
 }
 
-func MigrateUp(pg *PG) error {
+func (pg *PG) Migrate(migrationType string) error {
 	driver, err := postgres.WithInstance(pg.Conn, &postgres.Config{})
 	if err != nil {
 		fmt.Printf("Migration error getting driver:\n%s\n", err)
@@ -48,7 +48,15 @@ func MigrateUp(pg *PG) error {
 		return err
 	}
 
-	err = m.Up()
+	switch migrationType {
+	case "up":
+		err = m.Up()
+	case "down":
+		err = m.Down()
+	default:
+		err = errors.New(fmt.Sprintf("Migration error: Invalid migration type provided: %s", migrationType))
+	}
+
 	if err != nil {
 		if errors.Is(err, migrate.ErrNoChange) {
 			fmt.Println("No change")
