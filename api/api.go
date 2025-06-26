@@ -20,11 +20,45 @@ type Vendor struct {
 	UpdatedAt time.Time
 }
 
+type VendorUser struct {
+	UUID        string
+	Name        string
+	VendorUUID  string
+	Permissions string
+	Email       string
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+}
+
 func ServeAPI() {
 	slog.SetLogLoggerLevel(slog.LevelDebug)
 
 	r := gin.Default()
 	p, _ := pg.NewPG()
+
+	r.GET("/vendor_users", func(c *gin.Context) {
+		var users []VendorUser
+		rows, err := p.Conn.Query("SELECT uuid, name, vendor_uuid, permissions, email, created_at, updated_at FROM vendor_users")
+		defer rows.Close()
+		for rows.Next() {
+			var user VendorUser
+			if err := rows.Scan(&user.UUID, &user.Name, &user.VendorUUID, &user.Permissions, &user.Email, &user.CreatedAt, &user.UpdatedAt); err != nil {
+				log.Println("Error scanning vendor_users: %v", err)
+			} else {
+				users = append(users, user)
+			}
+		}
+		if err = rows.Err(); err != nil {
+			log.Println(err)
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": err.Error(),
+			})
+		} else {
+			c.JSON(http.StatusOK, users)
+		}
+	})
+	r.POST("/vendor_users", func(c *gin.Context) {
+	})
 
 	r.GET("/vendors", func(c *gin.Context) {
 		var vendors []Vendor
