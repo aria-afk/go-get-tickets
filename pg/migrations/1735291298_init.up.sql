@@ -13,7 +13,7 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE TABLE IF NOT EXISTS "vendor_users" (
   "uuid" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   "name" TEXT NOT NULL,
-  "vendor_uuid" UUID NOT NULL REFERENCES vendors (uuid),
+  "vendor_uuid" UUID REFERENCES vendors (uuid),
   "permissions" TEXT[] CHECK ("permissions" <@ '{admin, create, view}'::text[]),
   "email" TEXT NOT NULL UNIQUE,
   "password" TEXT NOT NULL,
