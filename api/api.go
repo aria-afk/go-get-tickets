@@ -30,13 +30,8 @@ type VendorUser struct {
 	UpdatedAt   time.Time
 }
 
-func ServeAPI() {
-	slog.SetLogLoggerLevel(slog.LevelDebug)
-
-	r := gin.Default()
-	p, _ := pg.NewPG()
-
-	r.GET("/vendor_users", func(c *gin.Context) {
+func GetVendorUsersHandler(p *pg.PG) gin.HandlerFunc {
+	return func(c *gin.Context) {
 		var users []VendorUser
 		rows, err := p.Conn.Query("SELECT uuid, name, vendor_uuid, permissions, email, created_at, updated_at FROM vendor_users")
 		defer rows.Close()
@@ -56,11 +51,11 @@ func ServeAPI() {
 		} else {
 			c.JSON(http.StatusOK, users)
 		}
-	})
-	r.POST("/vendor_users", func(c *gin.Context) {
-	})
+	}
+}
 
-	r.GET("/vendors", func(c *gin.Context) {
+func GetVendorsHandler(p *pg.PG) gin.HandlerFunc {
+	return func(c *gin.Context) {
 		var vendors []Vendor
 		// rows, err := p.Conn.Query("SELECT uuid, name, owner_uuid, created_at, updated_at FROM vendors")
 		rows, err := p.Conn.Query("SELECT uuid, name, created_at, updated_at FROM vendors")
@@ -83,15 +78,14 @@ func ServeAPI() {
 		} else {
 			c.JSON(http.StatusOK, vendors)
 		}
-	})
-	r.GET("/vendors/:vendor_uuid", func(c *gin.Context) {
+	}
+}
+
+func GetVendorByUUIDHandler(p *pg.PG) gin.HandlerFunc {
+	return func(c *gin.Context) {
 		vendor := Vendor{}
 		vu := c.Param("vendor_uuid")
 		fmt.Println(vu)
-		// p.Conn.QueryRow("SELECT uuid,name,owner_uuid,created_at,updated_at FROM vendors LIMIT 1").Scan(&UUID, &vendor.Name, &vendor.OwnerUUID, &vendor.CreatedAt, &vendor.UpdatedAt)
-		// err := p.Conn.QueryRow("SELECT uuid, name, owner_uuid, created_at, updated_at FROM vendors WHERE uuid = ? LIMIT 1", vu).
-		//		Scan(&vendor.UUID, &vendor.Name, &vendor.OwnerUUID, &vendor.CreatedAt, &vendor.UpdatedAt)
-		// err := p.Conn.QueryRow("SELECT uuid, name, created_at, updated_at FROM vendors WHERE uuid = ? LIMIT 1", vu).
 		err := p.Conn.QueryRow("SELECT uuid, name, created_at, updated_at FROM vendors WHERE uuid = $1 LIMIT 1", vu).
 			Scan(&vendor.UUID, &vendor.Name, &vendor.CreatedAt, &vendor.UpdatedAt)
 		if err != nil {
@@ -103,13 +97,23 @@ func ServeAPI() {
 		// TODO: check if i got a no row error
 		// TODO: load some example data in for tests
 
-		// i would have a field in gin.H that i put the struct in maybe is what aria says and i don't marshall it? if i want to nest it
-		// j, _ := json.Marshal(vendor)
-		// j, _ := json.Marshal(vendor)
-
 		c.JSON(http.StatusOK, vendor)
+	}
+}
+
+func ServeAPI() {
+	slog.SetLogLoggerLevel(slog.LevelDebug)
+
+	r := gin.Default()
+	p, _ := pg.NewPG()
+
+	r.GET("/vendor_users", GetVendorUsersHandler(p))
+	r.PUT("/vendor_users", func(c *gin.Context) {
 	})
-	//
+
+	r.GET("/vendors", GetVendorsHandler(p))
+	r.GET("/vendors/:vendor_uuid", GetVendorByUUIDHandler(p))
+
 	// GET vendor
 	// PUT vendor
 	// TODO use WITH INSERT INTO ... RETURNING uuid AS ... to insert in a transaction?
