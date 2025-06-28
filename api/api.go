@@ -30,6 +30,12 @@ type VendorUser struct {
 	UpdatedAt   time.Time
 }
 
+func NotImplementedHandler() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.JSON(http.StatusNotImplemented, nil)
+	}
+}
+
 func GetVendorUsersHandler(p *pg.PG) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var users []VendorUser
@@ -108,38 +114,38 @@ func ServeAPI() {
 	p, _ := pg.NewPG()
 
 	r.GET("/vendor_users", GetVendorUsersHandler(p))
-	r.PUT("/vendor_users", func(c *gin.Context) {
-	})
-
 	r.GET("/vendors", GetVendorsHandler(p))
 	r.GET("/vendors/:vendor_uuid", GetVendorByUUIDHandler(p))
 
-	// GET vendor
-	// PUT vendor
-	// TODO use WITH INSERT INTO ... RETURNING uuid AS ... to insert in a transaction?
-	// PATCH vendor
-	// DELETE vendor
-	// GET user for viewing your profile or settings or name??
-	// PUT user
-	// PATCH user
-	// DELETE user
-	// GET event
-	// PUT event
-	// provision tickets at event creation directly into db (means there needs to be upper limit)
-	// that is also where the qr codes get generated
-	// PATCH event to make edits or to hide or show an event
-	// DELETE event
+	// TODO: Implement
+	r.GET("/vendor_users/:user_uuid", NotImplementedHandler())
+	r.PATCH("/vendor_users/:user_uuid", NotImplementedHandler())
+	r.DELETE("/vendor_users/:user_uuid", NotImplementedHandler())
+	r.PUT("/vendor_users", NotImplementedHandler())
+
+	r.PATCH("/vendors/:vendor_uuid", NotImplementedHandler())
+	r.DELETE("/vendors/:vendor_uuid", NotImplementedHandler())
+	r.PUT("/vendors", NotImplementedHandler())
+
+	r.GET("/events", NotImplementedHandler())
+	r.GET("/events/:event_uuid", NotImplementedHandler())
+	r.PUT("/events", NotImplementedHandler())
+	r.PATCH("/events/:event_uuid", NotImplementedHandler())
+	r.DELETE("/events/:event_uuid", NotImplementedHandler())
+
+	r.GET("/tickets", NotImplementedHandler())
+	r.GET("/tickets/:ticket_uuid", NotImplementedHandler())
+	r.PUT("/tickets", NotImplementedHandler())
+	r.PATCH("/tickets/:ticket_uuid", NotImplementedHandler())
+	r.DELETE("/tickets/:ticket_uuid", NotImplementedHandler())
+
 	// for image upload we will try to use presigned urls
 	// GET presigned url (image name as param) for uploading to object store
-	// GET ticket
-	// PUT ticket
-	// PATCH ticket
-	// DELETE ticket (for refund?)
 	// GET receipt
 	// PUT receipt
 	// POST refund
 	// POST purchase
-	//
+
 	r.GET("/a", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"message": "outer ontext",
