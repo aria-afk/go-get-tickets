@@ -2,7 +2,10 @@
 package utils
 
 import (
+	"context"
 	"fmt"
+
+	"github.com/aria-afk/go-get-tickets/minio"
 
 	go_qr "github.com/piglig/go-qr"
 )
@@ -22,18 +25,15 @@ func GenerateQRCode(ticketUUID string) error {
 	return nil
 }
 
-func storeQRCode(path string) error {
-	return nil
-}
+func storeQRCode(ticketUUID string) error {
+	m, err := minio.NewMinio()
+	if err != nil {
+		return err
+	}
+	err = m.UploadImage(context.Background(), "qrcodes", ticketUUID, fmt.Sprintf("/tmp/%s.png", ticketUUID), true)
+	if err != nil {
+		return err
+	}
 
-// TODO:
-func GetQRCode(path string) error {
-	return nil
-}
-
-// TODO:
-// does min.io do expire times?
-// otherwise we can run a job or something to clean it up
-func DeleteQRCode(path string) error {
 	return nil
 }

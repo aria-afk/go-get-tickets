@@ -1,19 +1,20 @@
 package utils
 
 import (
-	"os"
 	"testing"
 )
 
-func TestGenerateQRCode(t *testing.T) {
-	err := GenerateQRCode("uuid")
+func TestQRCodeCreation(t *testing.T) {
+	err := GenerateQRCode("qr1")
 	if err != nil {
 		t.Error(err)
 	}
+}
 
-	if _, err := os.Stat("/tmp/uuid.png"); err != nil {
-		t.Error("QR code did not get generated")
-	} else {
-		os.Remove("/tmp/uuid.png")
+func TestQRCodeStorage(t *testing.T) {
+	LoadEnv("../dev.env")
+	err := storeQRCode("qr1")
+	if err != nil {
+		t.Error(err)
 	}
 }
