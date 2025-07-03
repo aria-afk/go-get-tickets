@@ -36,17 +36,6 @@ func NewMinio() (Minio, error) {
 	return m, nil
 }
 
-func (m *Minio) upsertBucket(ctx context.Context, bucketName string) error {
-	err := m.Client.MakeBucket(ctx, bucketName, min.MakeBucketOptions{})
-	if err != nil {
-		_, alreadyExists := m.Client.BucketExists(ctx, bucketName)
-		if alreadyExists == nil {
-			return err
-		}
-	}
-	return nil
-}
-
 func (m *Minio) UploadImage(ctx context.Context, bucket string, name string, filepath string, delete bool) error {
 	_, err := m.Client.FPutObject(ctx, bucket, name, filepath, min.PutObjectOptions{})
 	if err != nil {
