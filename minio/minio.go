@@ -1,7 +1,6 @@
 package minio
 
 import (
-	"fmt"
 	"os"
 	"strings"
 
@@ -11,8 +10,7 @@ import (
 )
 
 type Minio struct {
-	Client        *min.Client
-	DefaultBucket string
+	Client *min.Client
 }
 
 func NewMinio() (Minio, error) {
@@ -39,7 +37,6 @@ func NewMinio() (Minio, error) {
 }
 
 func (m *Minio) upsertBucket(ctx context.Context, bucketName string) error {
-	fmt.Println(bucketName)
 	err := m.Client.MakeBucket(ctx, bucketName, min.MakeBucketOptions{})
 	if err != nil {
 		_, alreadyExists := m.Client.BucketExists(ctx, bucketName)

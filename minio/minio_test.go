@@ -45,7 +45,7 @@ func TestUpload(t *testing.T) {
 	qrcode.WriteFile("uuid1", qrcode.High, 256, "/tmp/uuid1.png")
 
 	// can upload and not delete local copy
-	err := m.UploadImage(ctx, "test1", "uuid", "/tmp/uuid.png", false)
+	err := m.UploadImage(ctx, "qrcodes", "uuid", "/tmp/uuid.png", false)
 	if err != nil {
 		t.Error(err)
 	}
@@ -53,7 +53,7 @@ func TestUpload(t *testing.T) {
 		t.Error(err)
 	}
 	// can upload and delete local copy
-	err = m.UploadImage(ctx, "test1", "uuid1", "/tmp/uuid1.png", true)
+	err = m.UploadImage(ctx, "qrcodes", "uuid1", "/tmp/uuid1.png", true)
 	if err != nil {
 		t.Error(err)
 	}
@@ -62,12 +62,12 @@ func TestUpload(t *testing.T) {
 	}
 
 	// ensure we can reach the file in the bucket as well.
-	file, err := m.Client.GetObject(ctx, "test1", "uuid", min.GetObjectOptions{})
+	file, err := m.Client.GetObject(ctx, "qrcodes", "uuid", min.GetObjectOptions{})
 	obj, _ := file.Stat()
 	if obj.Key != "uuid" {
 		t.Fail()
 	}
-	file, err = m.Client.GetObject(ctx, "test1", "uuid1", min.GetObjectOptions{})
+	file, err = m.Client.GetObject(ctx, "qrcodes", "uuid1", min.GetObjectOptions{})
 	obj, _ = file.Stat()
 	if obj.Key != "uuid1" {
 		t.Fail()
