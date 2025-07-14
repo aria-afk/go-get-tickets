@@ -36,11 +36,6 @@ func NewPG() (*PG, error) {
 }
 
 func (pg *PG) Migrate(migrationType string, migrationPath string) error {
-	if migrationPath == "test" {
-		migrationPath = "file://migrations"
-	} else {
-		migrationPath = "file://pg/migrations"
-	}
 	driver, err := postgres.WithInstance(pg.Conn, &postgres.Config{})
 	if err != nil {
 		fmt.Printf("Migration error getting driver:\n%s\n", err)
