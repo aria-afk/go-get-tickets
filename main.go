@@ -23,7 +23,7 @@ func main() {
 			fmt.Printf("Error getting DB connection:\n%s", err)
 			os.Exit(1)
 		}
-		err = db.Migrate(*migrate)
+		err = db.Migrate(*migrate, "file://pg/migrations")
 		if err != nil {
 			os.Exit(1)
 		}

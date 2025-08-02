@@ -35,14 +35,14 @@ func NewPG() (*PG, error) {
 	}, nil
 }
 
-func (pg *PG) Migrate(migrationType string) error {
+func (pg *PG) Migrate(migrationType string, migrationPath string) error {
 	driver, err := postgres.WithInstance(pg.Conn, &postgres.Config{})
 	if err != nil {
 		fmt.Printf("Migration error getting driver:\n%s\n", err)
 		return err
 	}
 
-	m, err := migrate.NewWithDatabaseInstance("file://pg/migrations", "postgres", driver)
+	m, err := migrate.NewWithDatabaseInstance(migrationPath, "postgres", driver)
 	if err != nil {
 		fmt.Printf("Migration error getting migrator:\n%s\n", err)
 		return err

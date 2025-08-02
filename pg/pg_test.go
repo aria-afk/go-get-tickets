@@ -38,3 +38,23 @@ func TestNewPG(t *testing.T) {
 
 	cleanup()
 }
+
+func TestMigrations(t *testing.T) {
+	db, err := NewPG()
+	if err != nil {
+		cleanup()
+		t.Fatalf("Error creating new PG instance:\n%s", err)
+	}
+	err = db.Migrate("up", "file://migrations")
+	if err != nil {
+		cleanup()
+		t.Fatalf("Error migrating up:\n%s", err)
+	}
+	err = db.Migrate("down", "file://migrations")
+	if err != nil {
+		cleanup()
+		t.Fatalf("Error migrating down:\n%s", err)
+	}
+
+	cleanup()
+}
