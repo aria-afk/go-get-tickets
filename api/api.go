@@ -30,20 +30,16 @@ type VendorUser struct {
 	UpdatedAt   time.Time
 }
 
-func ServeAPI() {
-	slog.SetLogLoggerLevel(slog.LevelDebug)
-
-	r := gin.Default()
-	p, _ := pg.NewPG()
-
-	r.GET("/vendor_users", func(c *gin.Context) {
+func GetVendorUsers(p *pg.PG) gin.HandlerFunc {
+	return func(c *gin.Context) {
 		var users []VendorUser
 		rows, err := p.Conn.Query("SELECT uuid, name, vendor_uuid, permissions, email, created_at, updated_at FROM vendor_users")
+		// TODO handle no rows error or something
 		defer rows.Close()
 		for rows.Next() {
 			var user VendorUser
 			if err := rows.Scan(&user.UUID, &user.Name, &user.VendorUUID, &user.Permissions, &user.Email, &user.CreatedAt, &user.UpdatedAt); err != nil {
-				log.Println("Error scanning vendor_users: %v", err)
+				log.Printf("Error scanning vendor_users: %v\n", err)
 			} else {
 				users = append(users, user)
 			}
@@ -56,25 +52,42 @@ func ServeAPI() {
 		} else {
 			c.JSON(http.StatusOK, users)
 		}
-	})
-	r.POST("/vendor_users", func(c *gin.Context) {
-	})
+	}
+}
 
-	r.GET("/vendors", func(c *gin.Context) {
+func PutVendorUsers(p *pg.PG) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var user VendorUser
+		if err := c.BindJSON(&user); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": err.Error(),
+			})
+		}
+		_, err := p.Conn.Query(
+			"INSERT INTO vendor_users(name, vendor_uuid, permissions, email) VALUES($1, $2, $3, $4)",
+			user.Name, user.VendorUUID, user.Permissions, user.Email)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": err.Error(),
+			})
+		}
+		c.JSON(http.StatusAccepted, gin.H{})
+	}
+}
+
+func GetVendors(p *pg.PG) gin.HandlerFunc {
+	return func(c *gin.Context) {
 		var vendors []Vendor
-		// rows, err := p.Conn.Query("SELECT uuid, name, owner_uuid, created_at, updated_at FROM vendors")
 		rows, err := p.Conn.Query("SELECT uuid, name, created_at, updated_at FROM vendors")
 		defer rows.Close()
 		for rows.Next() {
 			var vendor Vendor
-			// if err := rows.Scan(&vendor.UUID, &vendor.Name, &vendor.OwnerUUID, &vendor.CreatedAt, &vendor.UpdatedAt); err != nil {
 			if err := rows.Scan(&vendor.UUID, &vendor.Name, &vendor.CreatedAt, &vendor.UpdatedAt); err != nil {
-				log.Println("Error scanning vendors: %v", err)
+				log.Printf("Error scanning vendors: %v\n", err)
 			} else {
 				vendors = append(vendors, vendor)
 			}
 		}
-		// fmt.Printf("%#v\n", vendor)
 		if err = rows.Err(); err != nil {
 			log.Println(err)
 			c.JSON(http.StatusInternalServerError, gin.H{
@@ -83,7 +96,18 @@ func ServeAPI() {
 		} else {
 			c.JSON(http.StatusOK, vendors)
 		}
-	})
+	}
+}
+
+func SetupRoutes(p *pg.PG) *gin.Engine {
+	slog.SetLogLoggerLevel(slog.LevelDebug)
+
+	r := gin.Default()
+
+	r.GET("/vendor_users", GetVendorUsers(p))
+	r.PUT("/vendor_users", PutVendorUsers(p))
+
+	r.GET("/vendors", GetVendors(p))
 	r.GET("/vendors/:vendor_uuid", func(c *gin.Context) {
 		vendor := Vendor{}
 		vu := c.Param("vendor_uuid")
@@ -101,45 +125,13 @@ func ServeAPI() {
 		fmt.Print(vendor)
 
 		// TODO: check if i got a no row error
-		// TODO: load some example data in for tests
-
-		// i would have a field in gin.H that i put the struct in maybe is what aria says and i don't marshall it? if i want to nest it
-		// j, _ := json.Marshal(vendor)
-		// j, _ := json.Marshal(vendor)
-
-		c.JSON(http.StatusOK, vendor)
 	})
-	//
-	// GET vendor
-	// PUT vendor
-	// TODO use WITH INSERT INTO ... RETURNING uuid AS ... to insert in a transaction?
-	// PATCH vendor
-	// DELETE vendor
-	// GET user for viewing your profile or settings or name??
-	// PUT user
-	// PATCH user
-	// DELETE user
-	// GET event
-	// PUT event
-	// provision tickets at event creation directly into db (means there needs to be upper limit)
-	// that is also where the qr codes get generated
-	// PATCH event to make edits or to hide or show an event
-	// DELETE event
-	// for image upload we will try to use presigned urls
-	// GET presigned url (image name as param) for uploading to object store
-	// GET ticket
-	// PUT ticket
-	// PATCH ticket
-	// DELETE ticket (for refund?)
-	// GET receipt
-	// PUT receipt
-	// POST refund
-	// POST purchase
-	//
-	r.GET("/a", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"message": "outer ontext",
-		})
-	})
+
+	return r
+}
+
+func ServeAPI() {
+	p, _ := pg.NewPG()
+	r := SetupRoutes(p)
 	r.Run()
 }
