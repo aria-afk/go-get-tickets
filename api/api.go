@@ -1,7 +1,6 @@
 package api
 
 import (
-	"fmt"
 	"log"
 	"log/slog"
 	"net/http"
@@ -13,21 +12,21 @@ import (
 )
 
 type Vendor struct {
-	UUID      string
-	Name      string
-	OwnerUUID string
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	UUID      string    `json:"uuid,omitempty"`
+	Name      string    `json:"name,omitempty"`
+	OwnerUUID string    `json:"owner_uuid,omitempty"`
+	CreatedAt time.Time `json:"created_at,omitempty"`
+	UpdatedAt time.Time `json:"updated_at,omitempty"`
 }
 
 type VendorUser struct {
-	UUID        string
-	Name        string
-	VendorUUID  string
-	Permissions string
-	Email       string
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	UUID        string    `json:"uuid,omitempty"`
+	Name        string    `json:"name,omitempty"`
+	VendorUUID  string    `json:"vendor_uuid,omitempty"`
+	Permissions string    `json:"permissions,omitempty"`
+	Email       string    `json:"email,omitempty"`
+	CreatedAt   time.Time `json:"created_at,omitempty"`
+	UpdatedAt   time.Time `json:"updated_at,omitempty"`
 }
 
 func GetVendorUsers(p *pg.PG) gin.HandlerFunc {
@@ -55,13 +54,14 @@ func GetVendorUsers(p *pg.PG) gin.HandlerFunc {
 	}
 }
 
-func PutVendorUsers(p *pg.PG) gin.HandlerFunc {
+func PutVendorUser(p *pg.PG) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var user VendorUser
 		if err := c.BindJSON(&user); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": err.Error(),
 			})
+			return
 		}
 		_, err := p.Conn.Query(
 			"INSERT INTO vendor_users(name, vendor_uuid, permissions, email) VALUES($1, $2, $3, $4)",
@@ -70,8 +70,41 @@ func PutVendorUsers(p *pg.PG) gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": err.Error(),
 			})
+			log.Println(err)
+		} else {
+			c.JSON(http.StatusAccepted, gin.H{})
 		}
-		c.JSON(http.StatusAccepted, gin.H{})
+	}
+}
+
+func DeleteVendorUser(p *pg.PG) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		_, err := p.Conn.Query(
+			"DELETE FROM vendor_users WHERE uuid = $1", c.Param("user_uuid"))
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": err.Error(),
+			})
+		} else {
+			c.JSON(http.StatusNoContent, gin.H{})
+		}
+	}
+}
+
+func GetVendorUser(p *pg.PG) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var user VendorUser
+		vu := c.Param("user_uuid")
+		err := p.Conn.QueryRow("SELECT uuid, name, vendor_uuid, permissions, email, created_at, updated_at FROM vendors WHERE uuid = $1 LIMIT 1", vu).
+			Scan(&user.UUID, &user.Name, &user.VendorUUID, &user.Permissions, &user.Email, &user.CreatedAt, &user.UpdatedAt)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": err.Error(),
+			})
+		} else {
+			c.JSON(http.StatusOK, user)
+		}
+		// fmt.Printf("%#v\n", vendor)
 	}
 }
 
@@ -99,33 +132,73 @@ func GetVendors(p *pg.PG) gin.HandlerFunc {
 	}
 }
 
+func PutVendor(p *pg.PG) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var vendor Vendor
+		if err := c.BindJSON(&vendor); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
+		_, err := p.Conn.Query(
+			"INSERT INTO vendor_users(name, owner_uuid) VALUES($1, $2)",
+			vendor.Name, vendor.OwnerUUID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": err.Error(),
+			})
+		} else {
+			c.JSON(http.StatusAccepted, gin.H{})
+		}
+	}
+}
+
+func DeleteVendor(p *pg.PG) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		_, err := p.Conn.Query(
+			"DELETE FROM vendors WHERE uuid = $1", c.Param("vendor_uuid"))
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": err.Error(),
+			})
+		} else {
+			c.JSON(http.StatusNoContent, gin.H{})
+		}
+	}
+}
+
+func GetVendor(p *pg.PG) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var vendor Vendor
+		vu := c.Param("vendor_uuid")
+		err := p.Conn.QueryRow("SELECT uuid, name, created_at, updated_at FROM vendors WHERE uuid = $1 LIMIT 1", vu).
+			Scan(&vendor.UUID, &vendor.Name, &vendor.CreatedAt, &vendor.UpdatedAt)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": err.Error(),
+			})
+		} else {
+			c.JSON(http.StatusOK, vendor)
+		}
+		// fmt.Printf("%#v\n", vendor)
+	}
+}
+
 func SetupRoutes(p *pg.PG) *gin.Engine {
 	slog.SetLogLoggerLevel(slog.LevelDebug)
 
 	r := gin.Default()
 
 	r.GET("/vendor_users", GetVendorUsers(p))
-	r.PUT("/vendor_users", PutVendorUsers(p))
+	r.PUT("/vendor_users", PutVendorUser(p))
+	r.GET("/vendor_users/:user_uuid", GetVendorUser(p))
+	r.DELETE("/vendor_users/:user_uuid", DeleteVendorUser(p))
 
 	r.GET("/vendors", GetVendors(p))
-	r.GET("/vendors/:vendor_uuid", func(c *gin.Context) {
-		vendor := Vendor{}
-		vu := c.Param("vendor_uuid")
-		fmt.Println(vu)
-		// p.Conn.QueryRow("SELECT uuid,name,owner_uuid,created_at,updated_at FROM vendors LIMIT 1").Scan(&UUID, &vendor.Name, &vendor.OwnerUUID, &vendor.CreatedAt, &vendor.UpdatedAt)
-		// err := p.Conn.QueryRow("SELECT uuid, name, owner_uuid, created_at, updated_at FROM vendors WHERE uuid = ? LIMIT 1", vu).
-		//		Scan(&vendor.UUID, &vendor.Name, &vendor.OwnerUUID, &vendor.CreatedAt, &vendor.UpdatedAt)
-		// err := p.Conn.QueryRow("SELECT uuid, name, created_at, updated_at FROM vendors WHERE uuid = ? LIMIT 1", vu).
-		err := p.Conn.QueryRow("SELECT uuid, name, created_at, updated_at FROM vendors WHERE uuid = $1 LIMIT 1", vu).
-			Scan(&vendor.UUID, &vendor.Name, &vendor.CreatedAt, &vendor.UpdatedAt)
-		if err != nil {
-			fmt.Println(err)
-		}
-		fmt.Printf("%#v\n", vendor)
-		fmt.Print(vendor)
-
-		// TODO: check if i got a no row error
-	})
+	r.PUT("/vendors", PutVendor(p))
+	r.GET("/vendors/:vendor_uuid", GetVendor(p))
+	r.DELETE("/vendors/:vendor_uuid", DeleteVendor(p))
 
 	return r
 }

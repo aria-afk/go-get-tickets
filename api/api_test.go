@@ -1,6 +1,9 @@
 package api
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -17,4 +20,21 @@ func TestGetVendorUsers(t *testing.T) {
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestPutVendorUsers(t *testing.T) {
+	p, _ := pg.NewPG()
+	r := SetupRoutes(p)
+
+	u := VendorUser{
+		Name:        "test User1",
+		Permissions: "",
+		Email:       "test@100.local",
+	}
+	u_json, _ := json.Marshal(u)
+	fmt.Println(string(u_json))
+	req, _ := http.NewRequest("PUT", "/vendor_users", bytes.NewBuffer(u_json))
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusAccepted, w.Code)
 }
