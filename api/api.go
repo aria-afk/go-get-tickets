@@ -36,9 +36,11 @@ func PatchVendorUser(p *pg.PG) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var options VendorUser
 		if err := c.ShouldBindJSON(&options); err != nil {
+			fmt.Println(err)
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
+		fmt.Printf("options: %v \n", options)
 		if options.UUID == "" {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "This method required the UUID field to be set."})
 			return
@@ -46,12 +48,19 @@ func PatchVendorUser(p *pg.PG) gin.HandlerFunc {
 		v := reflect.ValueOf(options)
 		vType := v.Type()
 		for i := 0; i < v.NumField(); i++ {
+			// FIXME: Check if val is nothing, if it is not do nothing
+			// FIXME: This does not understand snake case ie vendoruuid != vendor_uuid (struct no snek)
 			if v.Field(i).Interface() != nil {
-				_, err := p.Conn.Query(fmt.Sprintf("UPDATE vendor_users SET %s = $1", v.Field(i)), vType.Field(i).Name)
-				if err != nil {
-					// FIXME: Real error but i mess up here if error
-					fmt.Println(err)
-					c.JSON(http.StatusInternalServerError, gin.H{"error": "aria dumb"})
+				fmt.Printf("VAL: %v\n", v.Field(i))
+				fmt.Printf("KEY: %v\n", vType.Field(i).Name)
+				if vType.Field(i).Type != reflect.TypeFor[time.Time]() {
+
+					_, err := p.Conn.Query(fmt.Sprintf("UPDATE vendor_users SET %s = $1 WHERE uuid = $2", vType.Field(i).Name), v.Field(i).Interface().(string), options.UUID)
+					if err != nil {
+						// FIXME: Real error but i mess up here if error
+						fmt.Println("PatchVendorUser: ", err)
+						c.JSON(http.StatusInternalServerError, gin.H{"error": "aria dumb"})
+					}
 				}
 			}
 		}
@@ -61,12 +70,22 @@ func PatchVendorUser(p *pg.PG) gin.HandlerFunc {
 func GetVendorUsers(p *pg.PG) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var users []VendorUser
-		rows, err := p.Conn.Query("SELECT uuid, name, vendor_uuid, permissions, email, created_at, updated_at FROM vendor_users")
+		rows, err := p.Conn.Query("SELECT uuid, name, permissions, email, created_at, updated_at FROM vendor_users")
+		// rows, err := p.Conn.Query("SELECT uuid, name, vendor_uuid, permissions, email, created_at, updated_at FROM vendor_users")
 		// TODO handle no rows error or something
+		if err != nil {
+			log.Printf("GetVendorUsers: %v\n", err)
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
 		defer rows.Close()
 		for rows.Next() {
 			var user VendorUser
-			if err := rows.Scan(&user.UUID, &user.Name, &user.VendorUUID, &user.Permissions, &user.Email, &user.CreatedAt, &user.UpdatedAt); err != nil {
+			// FIXME: it should be a pointer
+			// if err := rows.Scan(&user.UUID, &user.Name, &user.VendorUUID, &user.Permissions, &user.Email, &user.CreatedAt, &user.UpdatedAt); err != nil {
+			if err := rows.Scan(&user.UUID, &user.Name, &user.Permissions, &user.Email, &user.CreatedAt, &user.UpdatedAt); err != nil {
 				log.Printf("Error scanning vendor_users: %v\n", err)
 			} else {
 				users = append(users, user)
@@ -97,9 +116,9 @@ func PutVendorUser(p *pg.PG) gin.HandlerFunc {
 		// c.JSON(http.StatusAccepted, gin.H{})
 		var uuid string
 		err := p.Conn.QueryRow(
-			"INSERT INTO vendor_users(name, vendor_uuid, permissions, email) VALUES($1, $2, $3, $4) RETURNING uuid",
-			//	"aaa", "bbb", "ccc", "ddd")
-			user.Name, user.VendorUUID, user.Permissions, user.Email).Scan(&uuid)
+			"INSERT INTO vendor_users(name, vendor_uuid, permissions, email) VALUES($1, $2, (SELECT ARRAY[$3]::TEXT[]), $4) RETURNING uuid",
+			// FIXME: make VendorUUID nullable somehow in the struct
+			user.Name, nil, user.Permissions, user.Email).Scan(&uuid)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": err.Error(),
@@ -129,9 +148,11 @@ func GetVendorUser(p *pg.PG) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var user VendorUser
 		vu := c.Param("user_uuid")
-		err := p.Conn.QueryRow("SELECT uuid, name, vendor_uuid, permissions, email, created_at, updated_at FROM vendors WHERE uuid = $1 LIMIT 1", vu).
-			Scan(&user.UUID, &user.Name, &user.VendorUUID, &user.Permissions, &user.Email, &user.CreatedAt, &user.UpdatedAt)
+		// FIXME: vendor_uuid
+		err := p.Conn.QueryRow("SELECT uuid, name, permissions, email, created_at, updated_at FROM vendor_users WHERE uuid = $1 LIMIT 1", vu).
+			Scan(&user.UUID, &user.Name, &user.Permissions, &user.Email, &user.CreatedAt, &user.UpdatedAt)
 		if err != nil {
+			fmt.Printf("GetVendorUser: %v\n", err)
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": err.Error(),
 			})
@@ -226,6 +247,7 @@ func SetupRoutes(p *pg.PG) *gin.Engine {
 
 	r.GET("/vendor_users", GetVendorUsers(p))
 	r.PUT("/vendor_users", PutVendorUser(p))
+	r.PATCH("/vendor_users", PatchVendorUser(p))
 	r.GET("/vendor_users/:user_uuid", GetVendorUser(p))
 	r.DELETE("/vendor_users/:user_uuid", DeleteVendorUser(p))
 

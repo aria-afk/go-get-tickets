@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS "vendor_users" (
   "vendor_uuid" UUID REFERENCES vendors (uuid),
   "permissions" TEXT[] CHECK ("permissions" <@ '{admin, create, view}'::text[]),
   "email" TEXT NOT NULL UNIQUE,
-  "password" TEXT NOT NULL,
+  "password" TEXT,
   "created_at" TIMESTAMP NOT NULL DEFAULT NOW(),
   "updated_at" TIMESTAMP NOT NULL DEFAULT NOW()
 );
