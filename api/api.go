@@ -34,12 +34,12 @@ type VendorUser struct {
 // takes in any field followed from the VendorUser json name
 func PatchVendorUser(p *pg.PG) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var options VenderUser
+		var options VendorUser
 		if err := c.ShouldBindJSON(&options); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		if options.UUID == nil {
+		if options.UUID == "" {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "This method required the UUID field to be set."})
 			return
 		}
@@ -95,17 +95,18 @@ func PutVendorUser(p *pg.PG) gin.HandlerFunc {
 		log.Printf("%v", user)
 		// TODO if vendor_uuid == ""
 		// c.JSON(http.StatusAccepted, gin.H{})
-		_, err := p.Conn.Query(
-			"INSERT INTO vendor_users(name, vendor_uuid, permissions, email) VALUES($1, $2, $3, $4)",
+		var uuid string
+		err := p.Conn.QueryRow(
+			"INSERT INTO vendor_users(name, vendor_uuid, permissions, email) VALUES($1, $2, $3, $4) RETURNING uuid",
 			//	"aaa", "bbb", "ccc", "ddd")
-			user.Name, user.VendorUUID, user.Permissions, user.Email)
+			user.Name, user.VendorUUID, user.Permissions, user.Email).Scan(&uuid)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": err.Error(),
 			})
 			log.Println(err)
 		} else {
-			c.JSON(http.StatusAccepted, gin.H{})
+			c.JSON(http.StatusAccepted, gin.H{"UUID": uuid})
 		}
 	}
 }
