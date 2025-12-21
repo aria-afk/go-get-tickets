@@ -33,7 +33,7 @@ func TestNewPG(t *testing.T) {
 
 	if response != 1 || err != nil {
 		cleanup()
-		t.Fatalf("Error preforming simple query:\n%s", err)
+		t.Fatalf("Error performing simple query:\n%s", err)
 	}
 
 	cleanup()

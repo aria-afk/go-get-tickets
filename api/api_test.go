@@ -22,14 +22,15 @@ func TestGetVendorUsers(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 }
 
-func TestPutVendorUsers(t *testing.T) {
+func TestPutVendorUser(t *testing.T) {
 	p, _ := pg.NewPG()
 	r := SetupRoutes(p)
 
 	u := VendorUser{
 		Name:        "test User1",
-		Permissions: "",
-		Email:       "test@100.local",
+		Permissions: "admin",
+		Email:       "test@localhost",
+		// VendorUUID:  "aaaaa0",
 	}
 	u_json, _ := json.Marshal(u)
 	fmt.Println(string(u_json))

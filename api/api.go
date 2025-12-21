@@ -12,7 +12,7 @@ import (
 )
 
 type Vendor struct {
-	UUID      string    `json:"uuid,omitempty"`
+	UUID      string    `json:"uuid"`
 	Name      string    `json:"name,omitempty"`
 	OwnerUUID string    `json:"owner_uuid,omitempty"`
 	CreatedAt time.Time `json:"created_at,omitempty"`
@@ -20,7 +20,7 @@ type Vendor struct {
 }
 
 type VendorUser struct {
-	UUID        string    `json:"uuid,omitempty"`
+	UUID        string    `json:"uuid"`
 	Name        string    `json:"name,omitempty"`
 	VendorUUID  string    `json:"vendor_uuid,omitempty"`
 	Permissions string    `json:"permissions,omitempty"`
@@ -63,8 +63,12 @@ func PutVendorUser(p *pg.PG) gin.HandlerFunc {
 			})
 			return
 		}
+		log.Printf("%v", user)
+		// TODO if vendor_uuid == ""
+		// c.JSON(http.StatusAccepted, gin.H{})
 		_, err := p.Conn.Query(
 			"INSERT INTO vendor_users(name, vendor_uuid, permissions, email) VALUES($1, $2, $3, $4)",
+			//	"aaa", "bbb", "ccc", "ddd")
 			user.Name, user.VendorUUID, user.Permissions, user.Email)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
