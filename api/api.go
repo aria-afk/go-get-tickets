@@ -1,9 +1,11 @@
 package api
 
 import (
+	"fmt"
 	"log"
 	"log/slog"
 	"net/http"
+	"reflect"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -27,6 +29,33 @@ type VendorUser struct {
 	Email       string    `json:"email,omitempty"`
 	CreatedAt   time.Time `json:"created_at,omitempty"`
 	UpdatedAt   time.Time `json:"updated_at,omitempty"`
+}
+
+// takes in any field followed from the VendorUser json name
+func PatchVendorUser(p *pg.PG) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var options VenderUser
+		if err := c.ShouldBindJSON(&options); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		if options.UUID == nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "This method required the UUID field to be set."})
+			return
+		}
+		v := reflect.ValueOf(options)
+		vType := v.Type()
+		for i := 0; i < v.NumField(); i++ {
+			if v.Field(i).Interface() != nil {
+				_, err := p.Conn.Query(fmt.Sprintf("UPDATE vendor_users SET %s = $1", v.Field(i)), vType.Field(i).Name)
+				if err != nil {
+					// FIXME: Real error but i mess up here if error
+					fmt.Println(err)
+					c.JSON(http.StatusInternalServerError, gin.H{"error": "aria dumb"})
+				}
+			}
+		}
+	}
 }
 
 func GetVendorUsers(p *pg.PG) gin.HandlerFunc {
